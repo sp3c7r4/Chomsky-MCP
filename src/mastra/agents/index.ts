@@ -1,21 +1,40 @@
 import { google } from '@ai-sdk/google';
 import { Agent } from '@mastra/core/agent';
 import { weatherTool } from '../tools';
+import { DeepgramVoice } from '@mastra/voice-deepgram';
+import { CompositeVoice } from '@mastra/core/voice';
+import { playAudio } from '@mastra/node-audio';
 
-export const weatherAgent = new Agent({
-  name: 'Weather Agent',
+const voice = new DeepgramVoice({
+  speechModel: {
+    name: 'aura',
+    apiKey: process.env.DEEPGRAM_API_KEY ,
+  },
+  listeningModel: {
+    name: 'nova-2',
+    apiKey: process.env.DEEPGRAM_API_KEY,
+  },
+  speaker: "asteria-en",
+});
+
+export const emergencyOrchestrator = new Agent({
+  name: 'Emergency Orchestrator',
   instructions: `
-      You are a helpful weather assistant that provides accurate weather information.
-
-      Your primary function is to help users get weather details for specific locations. When responding:
-      - Always ask for a location if none is provided
-      - If the location name isn't in English, please translate it
-      - If giving a location with multiple parts (e.g. "New York, NY"), use the most relevant part (e.g. "New York")
-      - Include relevant details like humidity, wind conditions, and precipitation
-      - Keep responses concise but informative
-
-      Use the weatherTool to fetch current weather data.
+      You are responsible for managing emergency response workflows.
+      Coordinate between tools to classify the emergency, verify location,
+      allocate resources, notify services, and log the interaction.
+      For casual conversations, provide appropriate responses.
 `,
   model: google('gemini-2.5-pro-exp-03-25'),
   tools: { weatherTool },
+  voice: new DeepgramVoice()
 });
+
+const { text } = await emergencyOrchestrator.generate('What color is the sky?');
+ 
+// Convert text to speech to an Audio Stream
+const audioStream = await emergencyOrchestrator.voice.speak(text, {
+speaker: "aura-english-us", // Optional: specify a speaker
+});
+ 
+// playAudio(audioStream);

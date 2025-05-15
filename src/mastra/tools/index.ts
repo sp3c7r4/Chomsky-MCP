@@ -8,6 +8,7 @@ interface GeocodingResponse {
     name: string;
   }[];
 }
+
 interface WeatherResponse {
   current: {
     time: string;
